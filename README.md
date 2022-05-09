@@ -1,4 +1,4 @@
-# TAB DSL
+# TAB DSL (v0.1.0)
 
 Domain-specific language for creating data representations of guitar tab information.
 
