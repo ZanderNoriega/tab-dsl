@@ -2,6 +2,7 @@
 const log = console.log.bind(console);
 const toString = JSON.stringify.bind(JSON);
 const logString = x => log(toString(x));
+const assert = require('assert');
 
 // lib typecheck
 
@@ -91,6 +92,14 @@ function checkAllAreNotes(xs) {
   if (!xs.every(isNote)) {
     throw `checkAllAreNotes: ${toString(xs)}`;
   }
+}
+
+function checkAllNotesTuningConsistency(notes, tuning) {
+  const stringQty = Object.keys(tuning).length;
+  notes.forEach(n => {
+    assert(n.string !== undefined, `note (${toString(n)}) has string`);
+    assert(n.string <= stringQty, `note (${toString(n)}) has string number <= to amount of strings in tuning (${stringQty})`);
+  });
 }
 
 function checkAllNotesHaveStrings(notes) {
@@ -262,7 +271,6 @@ const renderSilentString = (currentLine, n) => {
   // const silenced = silence(n);
   // const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
   const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
-  const assert = require('assert');
   assert.equal(silenced.fretRender.trim(), '-');
   let isChordStart = n.inChord == 'start';
   if (isChordStart) {
@@ -402,8 +410,6 @@ const formatLines = (processed, tuning) => {
       // must rethink. 
       // use note.length or something.
       [k]: splitStringIn(32)(lines[k]).map(s => {
-        const assert = require('assert');
-        // assert.equal(s, s.trim());
         return `${tuning[k]} ${s}`;
       })
     };
@@ -431,6 +437,7 @@ function renderASCII(program, tuning, title) {
   // const settings = flatten(program).map(modifiers).filter(isSetting);
   const notes = flatten(program).map(modifiers).filter(isNote);
   checkAllAreNotes(notes);
+  checkAllNotesTuningConsistency(notes, tuning);
   checkAllNotesHaveStrings(notes);
   const processed = renderStrings(notes, tuning);
   const formattedLines = formatLines(processed, tuning);
@@ -498,7 +505,7 @@ const t1 = {
   }
 }
 
-const t3 = {
+const t2 = {
   title: "Deftones - My Own Summer",
   program:
     [ 0, 11, 12, 0, 11, 8, 0, 8, 0, 8, 7, 0, 8, 5 ].map(dropBar6(sixteenth))
@@ -513,15 +520,33 @@ const t3 = {
   }
 };
 
+const t3 = {
+  title: "Zander Noriega - Steredenn",
+  program: [
+    ...repeat(9)(s7(de(1))),
+  ],
+  tuning: {
+    s1: 'Eb',
+    s2: 'Bb',
+    s3: 'Gb',
+    s4: 'Db',
+    s5: 'Ab',
+    s6: 'Eb',
+    s7: 'Ab',
+  }
+};
+
 function runTest(t) {
   log(renderASCII(t.program, t.tuning, t.title));
 }
 
-runTest(t0);
-runTest(t1);
-runTest(t3);
+[
+  t0,
+  t1,
+  t2,
+  t3
+].forEach(runTest);
 
-const assert = require('assert');
 const tests = {
   flatRepeat: () => {
     const xs0 = [
