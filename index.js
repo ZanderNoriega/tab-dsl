@@ -205,6 +205,8 @@ const bar = size => rootString => noteCons => rootFret => {
 const dropBar = bar(3);
 const dropBar7 = dropBar(7);
 const dropBar6 = dropBar(6);
+const open = size => rootString => noteCons => bar(size)(rootString)(noteCons)(0);
+const open3 = open(3);
 
 const powerChord = rootString => noteCons => rootFret => {
   checkNumberGreaterThan(rootString, 2);
@@ -237,7 +239,7 @@ const muted = note => ({...note, fret: 'x'});
 const palmMuted = annotate("'");
 
 // constructors - convenience
-let e = fret => eighth(fret);
+let e = eighth;
 let de = fret => dotted(eighth(fret));
 let s = sixteenth;
 let ss = fret => silence(s(fret));
@@ -461,34 +463,30 @@ const t0 = {
   }
 };
 
+const smellsStart = rootFret => [
+  powerChord6(de)(rootFret),
+  powerChord6(s)(rootFret),
+  powerChord6(e)(rootFret),
+];
+const smellsEnd = rootFret => [
+  powerChord5(e)(1),
+  ...repeat(2)(powerChord5(s)(rootFret)),
+];
+
 // Test 1
 const t1 = {
   title: "Nirvana - Smells Like Teen Spirit",
   program: [
-    powerChord6(de)(9),
-    powerChord6(s)(1),
-    powerChord6(e)(1),
+    ...smellsStart(1),
     powerChord6(ss)(1),
     ...repeat(3)(powerChord6(ms)(1)),
-    powerChord5(e)(1),
-    ...repeat(2)(powerChord5(s)(1)),
-    chord([
-      s5(eighth(0)),
-      s4(eighth(0)),
-      s3(eighth(0)),
-    ]),
-    powerChord6(de)(4),
-    powerChord6(s)(4),
-    powerChord6(e)(4),
+    ...smellsEnd(1),
+    open3(5)(e),
+    ...smellsStart(4),
     ...repeat(4)(powerChord6(ms)(4)),
-    powerChord5(e)(4),
-    ...repeat(2)(powerChord5(s)(4)),
+    ...smellsEnd(4),
     powerChord5(ss)(4),
-    chord([
-      s5(sixteenth(0)),
-      s4(sixteenth(0)),
-      s3(sixteenth(0)),
-    ]),
+    open3(5)(sixteenth)
   ],
   tuning: {
     s1: 'E',
@@ -549,6 +547,15 @@ const tests = {
     ]);
     const p1 = powerChord6(de)(1);
     assert(toString(p0) === toString(p1));
+  },
+  open3: () => {
+    const x = open3(5)(e);
+    const y = chord([
+      s5(e(0)),
+      s4(e(0)),
+      s3(e(0)),
+    ]);
+    assert.deepEqual(x, y);
   }
 };
 Object.keys(tests).forEach(k => {
