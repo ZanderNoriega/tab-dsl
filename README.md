@@ -10,11 +10,7 @@ Drum tab support to come later.
 
 Only accepting bug fixes and tests right now.
 
-If you want features... copy the code and implement them yourself!
-
-Meanwhile, I'll focus on implementing what I have in mind.
-
-When the code is close to my current "vision," I will be open to feature requests, if they don't deviate from my goals.
+When the code is close to my current "vision," I will be open to feature requests.
 
 # LICENSE
 
