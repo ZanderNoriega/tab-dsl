@@ -61,6 +61,7 @@ const trim = n => xs => {
 // constructors - typecheck
 const isGroup = x => Array.isArray(x.notes);
 const isNote = x => x.fret !== undefined;
+const isSilence = x => x.fret == '-';
 const isTuning = x =>
   isObject(x) && Object.keys(x).every(k => k.match(/^s\d$/) !== null);
 
@@ -312,8 +313,9 @@ const renderActiveStringChord = (currentLine, n, lastChordStartIndex, totalLengt
 }
 
 const renderActiveStringSingleNote = (currentLine, n, totalLength) => {
-  const isChordStart = n.inChord == 'start';
-  return currentLine + renderNote(n, totalLength)('= ');
+  // assert.doesNotMatch(n.fret.toString(), /-/);
+  let sustainSymbol = isSilence(n) ? '- ' : '= ';
+  return currentLine + renderNote(n, totalLength)(sustainSymbol);
 }
 
 const renderHeader = (processed, title) => {
@@ -619,22 +621,23 @@ const t4 = {
     // bar 4
     s3(stac(q)(11)),
 
-    s4(stac(sixteenth)(9)),
-    s4(stac(sixteenth)(14)),
-    s3(stac(sixteenth)(12)),
-    s2(stac(sixteenth)(11)),
+    s4(sixteenth(9)),
+    s4(sixteenth(14)),
+    s3(sixteenth(12)),
+    s2(sixteenth(11)),
 
-    s1(stac(sixteenth)(9)),
-    s1(stac(sixteenth)(14)),
-    s1(stac(sixteenth)(9)),
-    s2(stac(sixteenth)(11)),
+    s1(sixteenth(9)),
+    s1(sixteenth(14)),
+    s1(sixteenth(9)),
+    s2(sixteenth(11)),
 
-    s3(stac(sixteenth)(12)),
-    s4(stac(sixteenth)(14)),
-    s4(stac(sixteenth)(12)),
-    s4(stac(sixteenth)(11)),
+    s3(sixteenth(12)),
+    s4(sixteenth(14)),
+    s4(sixteenth(12)),
+    s4(sixteenth(11)),
 
-    s3(stac(q)(14)),
+    // bar 5
+    s3(sixteenth(14)),
   ],
   config: {
     title: "Zander Noriega - Exercise 1",
