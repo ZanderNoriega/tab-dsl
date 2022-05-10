@@ -146,6 +146,8 @@ const checkNumberGreaterThanZero = n => checkNumberGreaterThan(n, 0);
 // constructors - music
 
 const group = xs => ({ notes: xs });
+const half = x => ({ string: 7, fret: x, length: 1/2});
+const quarter = x => ({ string: 7, fret: x, length: 1/4});
 const eighth = x => ({ string: 7, fret: x, length: 1/8});
 const eighths = xs => group(xs.map(eighth));
 const sixteenth = x => ({ string: 7, fret: x, length: 1/16});
@@ -588,6 +590,66 @@ const t3 = {
   }
 };
 
+const q = quarter;
+const h = half;
+const stac = noteCons => fret => {
+  const n = noteCons(fret);
+  const halved = { ...n, length: n.length / 2 };
+  return [
+    halved,
+    silence(halved)
+  ];
+};
+
+const t4 = {
+  program: [
+    // bar 1
+    s4(stac(h)(9)),
+    s4(stac(h)(14)),
+    // bar 2
+    s4(stac(q)(12)),
+    s4(stac(q)(11)),
+    s4(stac(h)(9)),
+    // bar 3
+    s4(stac(q)(9)),
+    s4(stac(q)(14)),
+    s3(stac(q)(12)),
+    s3(stac(e)(11)),
+    s3(stac(e)(10)),
+    // bar 4
+    s3(stac(q)(11)),
+
+    s4(stac(sixteenth)(9)),
+    s4(stac(sixteenth)(14)),
+    s3(stac(sixteenth)(12)),
+    s2(stac(sixteenth)(11)),
+
+    s1(stac(sixteenth)(9)),
+    s1(stac(sixteenth)(14)),
+    s1(stac(sixteenth)(9)),
+    s2(stac(sixteenth)(11)),
+
+    s3(stac(sixteenth)(12)),
+    s4(stac(sixteenth)(14)),
+    s4(stac(sixteenth)(12)),
+    s4(stac(sixteenth)(11)),
+
+    s3(stac(q)(14)),
+  ],
+  config: {
+    title: "Zander Noriega - Exercise 1",
+    tuning: {
+      s1: 'Eb',
+      s2: 'Bb',
+      s3: 'Gb',
+      s4: 'Db',
+      s5: 'Ab',
+      s6: 'Eb',
+      s7: 'Ab',
+    }
+  }
+};
+
 function runTest(t) {
   log(renderASCII(t.program, t.config));
 }
@@ -595,8 +657,9 @@ function runTest(t) {
 [
   t0,
   t1,
-  // t2,
-  t3
+  t2,
+  t3,
+  t4
 ].forEach(runTest);
 
 const tests = {
