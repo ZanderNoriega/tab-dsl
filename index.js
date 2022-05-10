@@ -267,13 +267,17 @@ const renderNote = (note, startTime) => c => {
   // let s = '';
   let s = note.fretRender + ' ';
   quantaSum += quanta; // meaning "add bit of the note duration to the bar."
-  // log(`startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
+  // log(`${note.fret} startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
   if ((startTime + quantaSum) % 1 == 0) {
     s += barSep;
   }
   for (let i = 0; i < sustainLength; i++) {
     s += c;
     quantaSum += quanta;
+    // log(`    ${note.fret} startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
+    if ((startTime + quantaSum) % 1 == 0) {
+      s += barSep;
+    }
   }
   return s;
 };
@@ -293,15 +297,21 @@ const renderSilentString = (currentLine, n, totalLength) => {
   }
 }
 
-const renderActiveString = (currentLine, n, lastChordStartIndex, totalLength) => {
+const renderActiveStringChord = (currentLine, n, lastChordStartIndex, totalLength) => {
+  assert(lastChordStartIndex !== undefined);
   const isChordStart = n.inChord == 'start';
   if (isChordStart) {
     return currentLine + renderNote(n, totalLength)('= ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
     return currentLine.substring(0, lastChordStartIndex) + renderNote(n, totalLength)('= ');
   } else {
-    return currentLine + renderNote(n, totalLength)('= ');
+    throw new Error('Invalid call to renderActiveStringChord');
   }
+}
+
+const renderActiveStringSingleNote = (currentLine, n, totalLength) => {
+  const isChordStart = n.inChord == 'start';
+  return currentLine + renderNote(n, totalLength)('= ');
 }
 
 const renderHeader = (processed, title) => {
@@ -377,7 +387,6 @@ const renderStrings = (rawNotes, tuning) => {
   const initialState = {
     lines: defaultStrings.reduce((acc, k) => ({ ...acc, [k]: '' }), {}),
     totalLength: 0,
-    currentBar: 1
   };
   const notes = withRenderedFrets(rawNotes, tuning);
   let lastChordStartIndex;
@@ -386,49 +395,46 @@ const renderStrings = (rawNotes, tuning) => {
   let annotations = [];
   const processed = notes.reduce((acc, n) => {
     const lines = { ...acc.lines };
-
-    // voodoo for bar formatting
-    let currentBar = acc.currentBar;
     let totalLength = acc.totalLength;
-    let noteFillsCurrentBar = totalLength + n.length >= acc.currentBar;
-    if (noteFillsCurrentBar) {
-      log(`BAR ${currentBar} has been filled by note ${toString(n)}. At totalLength: ${acc.totalLength}`);
-      log(lines);
-      currentBar++;
-      // process.exit();
-      /*
-      Object.keys(lines).forEach(k => {
-        // lines[k] += "|";
-        lines[k] += `[${acc.totalLength}]`;
-      });
-      */
-    }
-
     // sort of a "playhead" along the "tracks"
     let annotationPosition = 0;
-    for (let i = 1; i <= defaultStrings.length; i++) {
-      let currentLine = acc.lines[`s${i}`];
+    const FIRST_STRING = 1;
+    for (let i = FIRST_STRING; i <= defaultStrings.length; i++) {
+      // log(`process string ${i}`, n);
+      let tabLineKey = `s${i}`;
+      // one tab line per string
+      let currentTabLine = acc.lines[tabLineKey];
       // step the "playhead" forward (for annotation purposes)
-      annotationPosition = currentLine.length;
+      annotationPosition = currentTabLine.length;
       let isSilentString = i !== n.string;
-      let isChordStart = n.inChord == 'start';
-      let updatedLine;
+      let updatedTabLine;
       if (isSilentString) {
-        updatedLine = renderSilentString(currentLine, n, totalLength);
+        updatedTabLine = renderSilentString(currentTabLine, n, totalLength);
       } else {
-        if (isChordStart) {
-          lastChordStartIndex = currentLine.length;
+        if (n.inChord !== undefined) {
+          let isChordStart = n.inChord == 'start';
+          if (isChordStart) {
+            lastChordStartIndex = currentTabLine.length;
+          }
+          updatedTabLine = renderActiveStringChord(currentTabLine, n, lastChordStartIndex, totalLength);
+        } else {
+          updatedTabLine = renderActiveStringSingleNote(currentTabLine, n, totalLength);
         }
-        updatedLine = renderActiveString(currentLine, n, lastChordStartIndex, totalLength);
       }
-      lines[`s${i}`] = updatedLine;
+      lines[tabLineKey] = updatedTabLine;
     }
     if (n.annotation) {
       annotations.push([annotationPosition, n.annotation]);
     }
-    return { ...acc, lines, totalLength: acc.totalLength + n.length, currentBar };
+    // let totalLength = acc.totalLength;
+    if (n.inChord == undefined || n.inChord == "end") {
+      // log(`totalLength += n.length (${toString(n)})`);
+      totalLength += n.length;
+    }
+    // return { ...acc, lines, totalLength: acc.totalLength + n.length };
+    return { ...acc, lines, totalLength };
   }, initialState);
-  log(processed.totalLength);
+  log(`Total Length (i.e. Bars): (${processed.totalLength})`);
   return { ...processed, annotations: renderAnnotations(annotations) };
 };
 
@@ -585,7 +591,7 @@ function runTest(t) {
 }
 
 [
-  // t0,
+  t0,
   t1,
   // t2,
   t3
