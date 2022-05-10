@@ -83,9 +83,9 @@ function checkAllAreStrings(xs) {
 }
 
 function checkAllAreNumbers(xs) {
-  if (!xs.every(isNumber)) {
-    throw "checkAllAreNumbers";
-  }
+  xs.forEach(x => {
+    assert(isNumber(x), `${x} is a number`);
+  });
 }
 
 function checkAllAreNotes(xs) {
@@ -255,41 +255,52 @@ let ss = fret => silence(s(fret));
 let ms = fret => muted(s(fret));
 let pe = fret => palmMuted(eighth(fret));
 
-const renderNote = note => c => {
+const renderNote = (note, startTime) => c => {
   checkAllAreNotes([note]);
+  checkAllAreNumbers([startTime]);
+  // log(`note ${note.fretRender} starts at ${startTime}`);
+  const barSep = "[bar-end]";
+  const quanta = 1/16;
+  let quantaSum = 0;
   // minus 1 because we don't want sustain when sustainLength = 1.
-  const sustainLength = (note.length / (1/16)) - 1;
+  const sustainLength = (note.length / quanta) - 1;
   // let s = '';
   let s = note.fretRender + ' ';
+  quantaSum += quanta; // meaning "add bit of the note duration to the bar."
+  // log(`startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
+  if ((startTime + quantaSum) % 1 == 0) {
+    s += barSep;
+  }
   for (let i = 0; i < sustainLength; i++) {
     s += c;
+    quantaSum += quanta;
   }
   return s;
 };
 
-const renderSilentString = (currentLine, n) => {
+const renderSilentString = (currentLine, n, totalLength) => {
   // const silenced = silence(n);
   // const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
   const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
   assert.equal(silenced.fretRender.trim(), '-');
   let isChordStart = n.inChord == 'start';
   if (isChordStart) {
-    return  currentLine + renderNote(silenced)('- ');
+    return  currentLine + renderNote(silenced, totalLength)('- ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
     return currentLine;
   } else {
-    return currentLine + renderNote(silenced)('- ');
+    return currentLine + renderNote(silenced, totalLength)('- ');
   }
 }
 
-const renderActiveString = (currentLine, n, lastChordStartIndex) => {
+const renderActiveString = (currentLine, n, lastChordStartIndex, totalLength) => {
   const isChordStart = n.inChord == 'start';
   if (isChordStart) {
-    return currentLine + renderNote(n)('= ');
+    return currentLine + renderNote(n, totalLength)('= ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
-    return currentLine.substring(0, lastChordStartIndex) + renderNote(n)('= ');
+    return currentLine.substring(0, lastChordStartIndex) + renderNote(n, totalLength)('= ');
   } else {
-    return currentLine + renderNote(n)('= ');
+    return currentLine + renderNote(n, totalLength)('= ');
   }
 }
 
@@ -365,6 +376,8 @@ const renderStrings = (rawNotes, tuning) => {
   const defaultStrings = Object.keys(tuning).sort((a, b) => a > b ? -1 : 1);
   const initialState = {
     lines: defaultStrings.reduce((acc, k) => ({ ...acc, [k]: '' }), {}),
+    totalLength: 0,
+    currentBar: 1
   };
   const notes = withRenderedFrets(rawNotes, tuning);
   let lastChordStartIndex;
@@ -373,6 +386,24 @@ const renderStrings = (rawNotes, tuning) => {
   let annotations = [];
   const processed = notes.reduce((acc, n) => {
     const lines = { ...acc.lines };
+
+    // voodoo for bar formatting
+    let currentBar = acc.currentBar;
+    let totalLength = acc.totalLength;
+    let noteFillsCurrentBar = totalLength + n.length >= acc.currentBar;
+    if (noteFillsCurrentBar) {
+      log(`BAR ${currentBar} has been filled by note ${toString(n)}. At totalLength: ${acc.totalLength}`);
+      log(lines);
+      currentBar++;
+      // process.exit();
+      /*
+      Object.keys(lines).forEach(k => {
+        // lines[k] += "|";
+        lines[k] += `[${acc.totalLength}]`;
+      });
+      */
+    }
+
     // sort of a "playhead" along the "tracks"
     let annotationPosition = 0;
     for (let i = 1; i <= defaultStrings.length; i++) {
@@ -383,20 +414,21 @@ const renderStrings = (rawNotes, tuning) => {
       let isChordStart = n.inChord == 'start';
       let updatedLine;
       if (isSilentString) {
-        updatedLine = renderSilentString(currentLine, n);
+        updatedLine = renderSilentString(currentLine, n, totalLength);
       } else {
         if (isChordStart) {
           lastChordStartIndex = currentLine.length;
         }
-        updatedLine = renderActiveString(currentLine, n, lastChordStartIndex);
+        updatedLine = renderActiveString(currentLine, n, lastChordStartIndex, totalLength);
       }
       lines[`s${i}`] = updatedLine;
     }
     if (n.annotation) {
       annotations.push([annotationPosition, n.annotation]);
     }
-    return { ...acc, lines };
+    return { ...acc, lines, totalLength: acc.totalLength + n.length, currentBar };
   }, initialState);
+  log(processed.totalLength);
   return { ...processed, annotations: renderAnnotations(annotations) };
 };
 
@@ -409,9 +441,12 @@ const formatLines = (processed, tuning) => {
       // only works for neat simple parts with single-digit fret numbers.
       // must rethink. 
       // use note.length or something.
+      /*
       [k]: splitStringIn(32)(lines[k]).map(s => {
         return `${tuning[k]} ${s}`;
       })
+      */
+      [k]: [ lines[k] ]
     };
   }, {});
   const annotations = processed.annotations;
@@ -523,7 +558,16 @@ const t2 = {
 const t3 = {
   title: "Zander Noriega - Steredenn",
   program: [
-    ...repeat(9)(s7(de(1))),
+    // ...repeat(9)(s7(de(1))),
+    s7(de(1)),
+    s7(de(2)),
+    s7(de(3)),
+    s7(de(4)),
+    s7(de(5)),
+    s7(de(6)),
+    s7(de(7)),
+    s7(de(8)),
+    s7(de(9)),
   ],
   tuning: {
     s1: 'Eb',
@@ -541,9 +585,9 @@ function runTest(t) {
 }
 
 [
-  t0,
+  // t0,
   t1,
-  t2,
+  // t2,
   t3
 ].forEach(runTest);
 
