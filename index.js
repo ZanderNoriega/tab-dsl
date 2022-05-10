@@ -443,22 +443,15 @@ const formatLines = (processed, tuning) => {
   const formattedLines = Object.keys(lines).reverse().reduce((acc, k) => {
     return {
       ...acc,
-      // this number here "32" is hardcoded with NO awareness of note lengths, etc.
-      // only works for neat simple parts with single-digit fret numbers.
-      // must rethink. 
-      // use note.length or something.
-      /*
-      [k]: splitStringIn(32)(lines[k]).map(s => {
-        return `${tuning[k]} ${s}`;
-      })
-      */
-      [k]: [ lines[k] ]
+      [k]: lines[k].split('[bar-end]').filter(s => s.length > 0).map(s => `${tuning[k]} ${s}`)
     };
   }, {});
+  /*
   const annotations = processed.annotations;
   formattedLines['::'] = splitStringIn(32)(annotations).map(s => 
     `${tuning[Object.keys(tuning)[0]].replace(/./g, ' ')} ${s}`
   );
+  */
   return formattedLines;
 };
 
