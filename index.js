@@ -11,27 +11,6 @@ const isString = x => typeof x == "string";
 const isObject = x => typeof x == "object";
 const isDefined = x => x !== undefined;
 
-// lib string
-
-const splitStringIn = n => s => {
-  checkAllAreStrings([s]);
-  const r = s.split('').reduce((acc, c) => {
-    if (acc.current.length === n) {
-      return {
-        ...acc,
-        current: [c],
-        total: acc.total.concat([acc.current])
-      };
-    } else {
-      return {
-        ...acc,
-        current: acc.current.concat([c]),
-      };
-    }
-  }, { current: [], total: [] });
-  return r.total.concat([r.current]).map(xs => xs.join(''));
-};
-
 // lib collection
 
 const repeat = n => x => {
@@ -61,6 +40,7 @@ const trim = n => xs => {
 // constructors - typecheck
 const isGroup = x => Array.isArray(x.notes);
 const isNote = x => x.fret !== undefined;
+const isSilence = x => x.fret == '-';
 const isTuning = x =>
   isObject(x) && Object.keys(x).every(k => k.match(/^s\d$/) !== null);
 
@@ -83,9 +63,9 @@ function checkAllAreStrings(xs) {
 }
 
 function checkAllAreNumbers(xs) {
-  if (!xs.every(isNumber)) {
-    throw "checkAllAreNumbers";
-  }
+  xs.forEach(x => {
+    assert(isNumber(x), `${x} is a number`);
+  });
 }
 
 function checkAllAreNotes(xs) {
@@ -146,6 +126,8 @@ const checkNumberGreaterThanZero = n => checkNumberGreaterThan(n, 0);
 // constructors - music
 
 const group = xs => ({ notes: xs });
+const half = x => ({ string: 7, fret: x, length: 1/2});
+const quarter = x => ({ string: 7, fret: x, length: 1/4});
 const eighth = x => ({ string: 7, fret: x, length: 1/8});
 const eighths = xs => group(xs.map(eighth));
 const sixteenth = x => ({ string: 7, fret: x, length: 1/16});
@@ -255,42 +237,64 @@ let ss = fret => silence(s(fret));
 let ms = fret => muted(s(fret));
 let pe = fret => palmMuted(eighth(fret));
 
-const renderNote = note => c => {
+const renderNote = (note, startTime) => c => {
   checkAllAreNotes([note]);
+  checkAllAreNumbers([startTime]);
+  // log(`note ${note.fretRender} starts at ${startTime}`);
+  const barSep = "[bar-end]";
+  const quanta = 1/16;
+  let quantaSum = 0;
   // minus 1 because we don't want sustain when sustainLength = 1.
-  const sustainLength = (note.length / (1/16)) - 1;
+  const sustainLength = (note.length / quanta) - 1;
   // let s = '';
   let s = note.fretRender + ' ';
+  quantaSum += quanta; // meaning "add bit of the note duration to the bar."
+  // log(`${note.fret} startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
+  if ((startTime + quantaSum) % 1 == 0) {
+    s += barSep;
+  }
   for (let i = 0; i < sustainLength; i++) {
     s += c;
+    quantaSum += quanta;
+    // log(`    ${note.fret} startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
+    if ((startTime + quantaSum) % 1 == 0) {
+      s += barSep;
+    }
   }
   return s;
 };
 
-const renderSilentString = (currentLine, n) => {
+const renderSilentString = (currentLine, n, totalLength) => {
   // const silenced = silence(n);
   // const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
   const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
   assert.equal(silenced.fretRender.trim(), '-');
   let isChordStart = n.inChord == 'start';
   if (isChordStart) {
-    return  currentLine + renderNote(silenced)('- ');
+    return  currentLine + renderNote(silenced, totalLength)('- ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
     return currentLine;
   } else {
-    return currentLine + renderNote(silenced)('- ');
+    return currentLine + renderNote(silenced, totalLength)('- ');
   }
 }
 
-const renderActiveString = (currentLine, n, lastChordStartIndex) => {
+const renderActiveStringChord = (currentLine, n, lastChordStartIndex, totalLength) => {
+  assert(lastChordStartIndex !== undefined);
   const isChordStart = n.inChord == 'start';
   if (isChordStart) {
-    return currentLine + renderNote(n)('= ');
+    return currentLine + renderNote(n, totalLength)('= ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
-    return currentLine.substring(0, lastChordStartIndex) + renderNote(n)('= ');
+    return currentLine.substring(0, lastChordStartIndex) + renderNote(n, totalLength)('= ');
   } else {
-    return currentLine + renderNote(n)('= ');
+    throw new Error('Invalid call to renderActiveStringChord');
   }
+}
+
+const renderActiveStringSingleNote = (currentLine, n, totalLength) => {
+  // assert.doesNotMatch(n.fret.toString(), /-/);
+  let sustainSymbol = isSilence(n) ? '- ' : '= ';
+  return currentLine + renderNote(n, totalLength)(sustainSymbol);
 }
 
 const renderHeader = (processed, title) => {
@@ -365,6 +369,7 @@ const renderStrings = (rawNotes, tuning) => {
   const defaultStrings = Object.keys(tuning).sort((a, b) => a > b ? -1 : 1);
   const initialState = {
     lines: defaultStrings.reduce((acc, k) => ({ ...acc, [k]: '' }), {}),
+    totalLength: 0,
   };
   const notes = withRenderedFrets(rawNotes, tuning);
   let lastChordStartIndex;
@@ -373,30 +378,46 @@ const renderStrings = (rawNotes, tuning) => {
   let annotations = [];
   const processed = notes.reduce((acc, n) => {
     const lines = { ...acc.lines };
+    let totalLength = acc.totalLength;
     // sort of a "playhead" along the "tracks"
     let annotationPosition = 0;
-    for (let i = 1; i <= defaultStrings.length; i++) {
-      let currentLine = acc.lines[`s${i}`];
+    const FIRST_STRING = 1;
+    for (let i = FIRST_STRING; i <= defaultStrings.length; i++) {
+      // log(`process string ${i}`, n);
+      let tabLineKey = `s${i}`;
+      // one tab line per string
+      let currentTabLine = acc.lines[tabLineKey];
       // step the "playhead" forward (for annotation purposes)
-      annotationPosition = currentLine.length;
+      annotationPosition = currentTabLine.length;
       let isSilentString = i !== n.string;
-      let isChordStart = n.inChord == 'start';
-      let updatedLine;
+      let updatedTabLine;
       if (isSilentString) {
-        updatedLine = renderSilentString(currentLine, n);
+        updatedTabLine = renderSilentString(currentTabLine, n, totalLength);
       } else {
-        if (isChordStart) {
-          lastChordStartIndex = currentLine.length;
+        if (n.inChord !== undefined) {
+          let isChordStart = n.inChord == 'start';
+          if (isChordStart) {
+            lastChordStartIndex = currentTabLine.length;
+          }
+          updatedTabLine = renderActiveStringChord(currentTabLine, n, lastChordStartIndex, totalLength);
+        } else {
+          updatedTabLine = renderActiveStringSingleNote(currentTabLine, n, totalLength);
         }
-        updatedLine = renderActiveString(currentLine, n, lastChordStartIndex);
       }
-      lines[`s${i}`] = updatedLine;
+      lines[tabLineKey] = updatedTabLine;
     }
     if (n.annotation) {
       annotations.push([annotationPosition, n.annotation]);
     }
-    return { ...acc, lines };
+    // let totalLength = acc.totalLength;
+    if (n.inChord == undefined || n.inChord == "end") {
+      // log(`totalLength += n.length (${toString(n)})`);
+      totalLength += n.length;
+    }
+    // return { ...acc, lines, totalLength: acc.totalLength + n.length };
+    return { ...acc, lines, totalLength };
   }, initialState);
+  log(`Total Length (i.e. Bars): (${processed.totalLength})`);
   return { ...processed, annotations: renderAnnotations(annotations) };
 };
 
@@ -405,19 +426,15 @@ const formatLines = (processed, tuning) => {
   const formattedLines = Object.keys(lines).reverse().reduce((acc, k) => {
     return {
       ...acc,
-      // this number here "32" is hardcoded with NO awareness of note lengths, etc.
-      // only works for neat simple parts with single-digit fret numbers.
-      // must rethink. 
-      // use note.length or something.
-      [k]: splitStringIn(32)(lines[k]).map(s => {
-        return `${tuning[k]} ${s}`;
-      })
+      [k]: lines[k].split('[bar-end]').filter(s => s.length > 0).map(s => `${tuning[k]} ${s}`)
     };
   }, {});
+  /*
   const annotations = processed.annotations;
   formattedLines['::'] = splitStringIn(32)(annotations).map(s => 
     `${tuning[Object.keys(tuning)[0]].replace(/./g, ' ')} ${s}`
   );
+  */
   return formattedLines;
 };
 
@@ -433,7 +450,8 @@ const renderFormatterLines = formattedLines => {
   }).join('\n\n');
 };
 
-function renderASCII(program, tuning, title) {
+function renderASCII(program, config) {
+  const { tuning, title } = config;
   // const settings = flatten(program).map(modifiers).filter(isSetting);
   const notes = flatten(program).map(modifiers).filter(isNote);
   checkAllAreNotes(notes);
@@ -451,7 +469,6 @@ function renderASCII(program, tuning, title) {
 // Test 0
 let chuggies = palmMuted(sixteenths([0,1,0])); 
 const t0 = {
-  title: "Meshuggah - New Millenium Cyanide Christ",
   program: [
     ...trim(8)(flatRepeat(15)([
       ...s7([chuggies, de(2), pe(0), pe(0)]),
@@ -459,14 +476,17 @@ const t0 = {
       ...s7([chuggies]),
     ]))
   ],
-  tuning: {
-    s1: 'Eb',
-    s2: 'Bb',
-    s3: 'Gb',
-    s4: 'Db',
-    s5: 'Ab',
-    s6: 'Eb',
-    s7: 'Bb',
+  config: {
+    title: "Meshuggah - New Millenium Cyanide Christ",
+    tuning: {
+      s1: 'Eb',
+      s2: 'Bb',
+      s3: 'Gb',
+      s4: 'Db',
+      s5: 'Ab',
+      s6: 'Eb',
+      s7: 'Bb',
+    }
   }
 };
 
@@ -482,7 +502,6 @@ const smellsEnd = rootFret => [
 
 // Test 1
 const t1 = {
-  title: "Nirvana - Smells Like Teen Spirit",
   program: [
     ...smellsStart(1),
     powerChord6(ss)(1),
@@ -495,56 +514,134 @@ const t1 = {
     powerChord5(ss)(4),
     open3(5)(sixteenth)
   ],
-  tuning: {
-    s1: 'E',
-    s2: 'B',
-    s3: 'G',
-    s4: 'D',
-    s5: 'A',
-    s6: 'E',
+  config: {
+    title: "Nirvana - Smells Like Teen Spirit",
+    tuning: {
+      s1: 'E',
+      s2: 'B',
+      s3: 'G',
+      s4: 'D',
+      s5: 'A',
+      s6: 'E',
+    }
   }
 }
 
 const t2 = {
-  title: "Deftones - My Own Summer",
   program:
     [ 0, 11, 12, 0, 11, 8, 0, 8, 0, 8, 7, 0, 8, 5 ].map(dropBar6(sixteenth))
   ,
-  tuning: {
-    s1: 'E',
-    s2: 'B',
-    s3: 'G',
-    s4: 'D',
-    s5: 'A',
-    s6: 'D',
+  config: {
+    title: "Deftones - My Own Summer",
+    tuning: {
+      s1: 'E',
+      s2: 'B',
+      s3: 'G',
+      s4: 'D',
+      s5: 'A',
+      s6: 'D',
+    }
   }
 };
 
 const t3 = {
-  title: "Zander Noriega - Steredenn",
   program: [
-    ...repeat(9)(s7(de(1))),
+    // ...repeat(9)(s7(de(1))),
+    s7(de(1)),
+    s7(de(2)),
+    s7(de(3)),
+    s7(de(4)),
+    s7(de(5)),
+    s7(de(6)),
+    s7(de(7)),
+    s7(de(8)),
+    s7(de(9)),
   ],
-  tuning: {
-    s1: 'Eb',
-    s2: 'Bb',
-    s3: 'Gb',
-    s4: 'Db',
-    s5: 'Ab',
-    s6: 'Eb',
-    s7: 'Ab',
+  config: {
+    title: "Zander Noriega - Steredenn",
+    tuning: {
+      s1: 'Eb',
+      s2: 'Bb',
+      s3: 'Gb',
+      s4: 'Db',
+      s5: 'Ab',
+      s6: 'Eb',
+      s7: 'Ab',
+    }
+  }
+};
+
+const q = quarter;
+const h = half;
+const stac = noteCons => fret => {
+  const n = noteCons(fret);
+  const halved = { ...n, length: n.length / 2 };
+  return [
+    halved,
+    silence(halved)
+  ];
+};
+
+const t4 = {
+  program: [
+    // bar 1
+    s4(stac(h)(9)),
+    s4(stac(h)(14)),
+    // bar 2
+    s4(stac(q)(12)),
+    s4(stac(q)(11)),
+    s4(stac(h)(9)),
+    // bar 3
+    s4(stac(q)(9)),
+    s4(stac(q)(14)),
+    s3(stac(q)(12)),
+    s3(stac(e)(11)),
+    s3(stac(e)(10)),
+    // bar 4
+    s3(stac(q)(11)),
+
+    s4(sixteenth(9)),
+    s4(sixteenth(14)),
+    s3(sixteenth(12)),
+    s2(sixteenth(11)),
+
+    s1(sixteenth(9)),
+    s1(sixteenth(14)),
+    s1(sixteenth(9)),
+    s2(sixteenth(11)),
+
+    s3(sixteenth(12)),
+    s4(sixteenth(14)),
+    s4(sixteenth(12)),
+    s4(sixteenth(11)),
+
+    // bar 5
+    s4(sixteenth(14)),
+  ],
+  config: {
+    title: "Zander Noriega - Exercise 1",
+    tuning: {
+      s1: 'Eb',
+      s2: 'Bb',
+      s3: 'Gb',
+      s4: 'Db',
+      s5: 'Ab',
+      s6: 'Eb',
+      s7: 'Ab',
+    }
   }
 };
 
 function runTest(t) {
-  log(renderASCII(t.program, t.tuning, t.title));
+  log(renderASCII(t.program, t.config));
 }
 
 [
   t0,
   t1,
   t2,
-  t3
+  t3,
+  t4
 ].forEach(runTest);
 
 const tests = {
@@ -581,6 +678,34 @@ const tests = {
       s3(e(0)),
     ]);
     assert.deepEqual(x, y);
+  },
+  asColumns: () => {
+    const tuning = {
+      s1: 'Eb',
+      s2: 'Bb',
+      s3: 'Gb',
+      s4: 'Db',
+      s5: 'Ab',
+      s6: 'Eb',
+      s7: 'Ab',
+    };
+    const notes = [
+      ...chord([
+        s6(eighth(0)),
+        s5(eighth(2)),
+        s4(eighth(2)),
+      ]),
+      s6(eighth(5)),
+      s5(eighth(3)),
+      s4(eighth(2)),
+    ];
+    const r = asColumns(notes, tuning).map(xs => xs.map(n => n.fret));
+    assert.deepEqual(r, [
+      [ 0, 2, 2],
+      [ 5 ],
+      [ 3 ],
+      [ 2 ],
+    ]);
   }
 };
 Object.keys(tests).forEach(k => {
