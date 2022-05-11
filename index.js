@@ -11,27 +11,6 @@ const isString = x => typeof x == "string";
 const isObject = x => typeof x == "object";
 const isDefined = x => x !== undefined;
 
-// lib string
-
-const splitStringIn = n => s => {
-  checkAllAreStrings([s]);
-  const r = s.split('').reduce((acc, c) => {
-    if (acc.current.length === n) {
-      return {
-        ...acc,
-        current: [c],
-        total: acc.total.concat([acc.current])
-      };
-    } else {
-      return {
-        ...acc,
-        current: acc.current.concat([c]),
-      };
-    }
-  }, { current: [], total: [] });
-  return r.total.concat([r.current]).map(xs => xs.join(''));
-};
-
 // lib collection
 
 const repeat = n => x => {
@@ -699,6 +678,34 @@ const tests = {
       s3(e(0)),
     ]);
     assert.deepEqual(x, y);
+  },
+  asColumns: () => {
+    const tuning = {
+      s1: 'Eb',
+      s2: 'Bb',
+      s3: 'Gb',
+      s4: 'Db',
+      s5: 'Ab',
+      s6: 'Eb',
+      s7: 'Ab',
+    };
+    const notes = [
+      ...chord([
+        s6(eighth(0)),
+        s5(eighth(2)),
+        s4(eighth(2)),
+      ]),
+      s6(eighth(5)),
+      s5(eighth(3)),
+      s4(eighth(2)),
+    ];
+    const r = asColumns(notes, tuning).map(xs => xs.map(n => n.fret));
+    assert.deepEqual(r, [
+      [ 0, 2, 2],
+      [ 5 ],
+      [ 3 ],
+      [ 2 ],
+    ]);
   }
 };
 Object.keys(tests).forEach(k => {
