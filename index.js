@@ -637,7 +637,7 @@ const t4 = {
     s4(sixteenth(11)),
 
     // bar 5
-    s3(sixteenth(14)),
+    s4(sixteenth(14)),
   ],
   config: {
     title: "Zander Noriega - Exercise 1",
