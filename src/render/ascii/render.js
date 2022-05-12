@@ -11,7 +11,7 @@ const {
 
 const {
   silence,
-} = require('../../music/constructors');
+} = require('../../music/primitives');
 
 const {
   flatten,

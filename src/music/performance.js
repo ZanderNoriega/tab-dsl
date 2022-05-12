@@ -6,7 +6,7 @@ const {
 const {
   eighth,
   s,
-} = require('./constructors');
+} = require('./primitives');
 
 const annotate = a => x => {
   if (isNote(x)) {

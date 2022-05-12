@@ -2,7 +2,7 @@ const {
   flatRepeat,
   repeat,
   log,
-} = require('./src/lib/std');
+} = require('./src/std');
 
 const {
   sixteenth,
@@ -14,20 +14,20 @@ const {
   s,
   e,
   ss,
-} = require('./src/lib/music/constructors');
+} = require('./src/music/primitives');
 
 const {
   powerChord5,
   powerChord6,
   open3,
   dropBar6
-} = require('./src/lib/music/chords');
+} = require('./src/music/chords');
 
 const {
   palmMuted,
   pe,
   ms,
-} = require('./src/lib/music/performance');
+} = require('./src/music/performance');
 
 const {
   trim,
@@ -36,11 +36,11 @@ const {
   s3,
   s2,
   s1,
-} = require('./src/lib/music/composition');
+} = require('./src/music/composition');
 
 const {
   renderASCII,
-} = require('./src/lib/render/ascii/render');
+} = require('./src/render/ascii/render');
 
 // constructors - convenience
 // Test 0
