@@ -107,10 +107,10 @@ const tests = {
     const path = require('path');
     const snapshotFilename = path.join('./', 'tests', 'snapshots', 'ascii.txt');
     const snapshot = fs.readFileSync(snapshotFilename, 'utf8');
-    assert.equal(snapshot.trim(), examples.trim());
+    assert.equal(snapshot, examples, 'ascii render equals ascii snapshot');
   }
 };
 
 Object.keys(tests).forEach(k => {
-  assert.doesNotThrow(tests[k]);
+  tests[k]();
 });
