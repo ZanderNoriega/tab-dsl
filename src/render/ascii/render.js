@@ -1,9 +1,12 @@
 const {
   columnsToArray,
   assert,
-  log,
   repeat,
 } = require('../../std');
+
+const {
+  asColumns,
+} = require('../../music/algebra');
 
 const {
   modifiers,
@@ -34,7 +37,6 @@ const {
 const renderNote = (note, startTime) => c => {
   checkAllAreNotes([note]);
   checkAllAreNumbers([startTime]);
-  // log(`note ${note.fretRender} starts at ${startTime}`);
   const barSep = "[bar-end]";
   const quanta = 1/16;
   let quantaSum = 0;
@@ -43,14 +45,12 @@ const renderNote = (note, startTime) => c => {
   // let s = '';
   let s = note.fretRender + ' ';
   quantaSum += quanta; // meaning "add bit of the note duration to the bar."
-  // log(`${note.fret} startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
   if ((startTime + quantaSum) % 1 == 0) {
     s += barSep;
   }
   for (let i = 0; i < sustainLength; i++) {
     s += c;
     quantaSum += quanta;
-    // log(`    ${note.fret} startTime + quantaSum (${startTime} + ${quantaSum})`, startTime + quantaSum);
     if ((startTime + quantaSum) % 1 == 0) {
       s += barSep;
     }
@@ -116,25 +116,6 @@ const renderAnnotations = annotations => {
   }
 };
 
-const asColumns = (notes, tuning) => {
-  checkAllAreTuning([tuning]);
-  checkAllAreNotes(notes);
-  const columns = notes.reduce((acc, n) => {
-    let columns = acc.columns.concat([]);
-    let currentColumn = acc.currentColumn.concat([]);
-    let stringQty = Object.keys(tuning).length;
-    if (n.inChord == 'end' || n.inChord == undefined) {
-      currentColumn.push(n);
-      columns.push(currentColumn);
-      currentColumn = [];
-    } else {
-      currentColumn.push(n);
-    }
-    return { ...acc, currentColumn, columns }
-  }, { currentColumn: [], columns: [] }).columns;
-  return columns;
-}
-
 const addPadding = columns => {
   const paddedColumns = columns.map(col => {
     const maxLength = col.reduce((acc, note) => {
@@ -174,7 +155,6 @@ const renderStrings = (rawNotes, tuning) => {
     let annotationPosition = 0;
     const FIRST_STRING = 1;
     for (let i = FIRST_STRING; i <= defaultStrings.length; i++) {
-      // log(`process string ${i}`, n);
       let tabLineKey = `s${i}`;
       // one tab line per string
       let currentTabLine = acc.lines[tabLineKey];
@@ -202,13 +182,11 @@ const renderStrings = (rawNotes, tuning) => {
     }
     // let totalLength = acc.totalLength;
     if (n.inChord == undefined || n.inChord == "end") {
-      // log(`totalLength += n.length (${toString(n)})`);
       totalLength += n.length;
     }
     // return { ...acc, lines, totalLength: acc.totalLength + n.length };
     return { ...acc, lines, totalLength };
   }, initialState);
-  log(`Total Length (i.e. Bars): (${processed.totalLength})`);
   return { ...processed, annotations: renderAnnotations(annotations) };
 };
 

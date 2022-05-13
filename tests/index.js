@@ -1,3 +1,41 @@
+const {
+  asColumns,
+} = require('../src/music/algebra');
+
+const {
+  sixteenths,
+  de,
+  dotted,
+  eighth,
+  e,
+} = require('../src/music/primitives');
+
+const {
+  chord,
+  powerChord6,
+  open3,
+} = require('../src/music/chords');
+
+const {
+  s7,
+  s6,
+  s5,
+  s4,
+  s3,
+} = require('../src/music/composition');
+
+const {
+  palmMuted,
+  pe,
+} = require('../src/music/performance');
+
+const {
+  assert,
+  flatRepeat,
+} = require('../src/std');
+
+const chuggies = palmMuted(sixteenths([0,1,0])); 
+
 const tests = {
   flatRepeat: () => {
     const xs0 = [
@@ -60,9 +98,19 @@ const tests = {
       [ 3 ],
       [ 2 ],
     ]);
+  },
+  asciiRenderMatchesSnapshot: () => {
+    const {
+      examples,
+    } = require('./examples/ascii');
+    const fs = require('fs');
+    const path = require('path');
+    const snapshotFilename = path.join('./', 'tests', 'snapshots', 'ascii.txt');
+    const snapshot = fs.readFileSync(snapshotFilename, 'utf8');
+    assert.equal(snapshot.trim(), examples.trim());
   }
 };
 
 Object.keys(tests).forEach(k => {
-  tests[k]();
+  assert.doesNotThrow(tests[k]);
 });
