@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "rm -rf build && tsc",
     "test": "node tests/index.js",
     "generate:snapshot:ascii": "node tests/generate-snapshot.js ascii"
   },
@@ -12,5 +13,8 @@
     "url": "git@main:ZanderNoriega/tab-dsl.git"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^4.6.4"
+  }
 }
