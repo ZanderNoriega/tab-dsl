@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "build": "rm -rf build && tsc",
     "test": "node tests/index.js",
     "generate:snapshot:ascii": "node tests/generate-snapshot.js ascii"
