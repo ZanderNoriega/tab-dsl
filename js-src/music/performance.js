@@ -1,14 +1,8 @@
-const {
-  isNote,
-  isGroup,
-} = require('./predicates');
+const { isNote, isGroup } = require('./predicates');
 
-const {
-  eighth,
-  s,
-} = require('./primitives');
+const { eighth, s } = require('./primitives');
 
-const annotate = a => x => {
+const annotate = (a) => (x) => {
   if (isNote(x)) {
     const note = x;
     const marked = { ...note, annotation: a };
@@ -20,23 +14,22 @@ const annotate = a => x => {
   } else {
     throw `Cannot annotate: ${toString(x)}`;
   }
-}
+};
 
-const muted = note => ({...note, fret: 'x'});
+const muted = (note) => ({ ...note, fret: 'x' });
 
 const palmMuted = annotate("'");
 
-exports.muted = muted; 
+exports.muted = muted;
 
-exports.palmMuted = palmMuted; 
+exports.palmMuted = palmMuted;
 
-exports.annotate = annotate; 
+exports.annotate = annotate;
 
-const ms = fret => muted(s(fret));
+const ms = (fret) => muted(s(fret));
 
-const pe = fret => palmMuted(eighth(fret));
+const pe = (fret) => palmMuted(eighth(fret));
 
-exports.ms = ms; 
+exports.ms = ms;
 
-exports.pe = pe; 
-
+exports.pe = pe;

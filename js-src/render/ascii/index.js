@@ -1,29 +1,14 @@
-const {
-  columnsToArray,
-  assert,
-  repeat,
-} = require('../../std');
+const { columnsToArray, assert, repeat } = require('../../std');
 
-const {
-  asColumns,
-} = require('../../music/algebra');
+const { asColumns } = require('../../music/algebra');
 
-const {
-  modifiers,
-} = require('../../music/composition');
+const { modifiers } = require('../../music/composition');
 
-const {
-  silence,
-} = require('../../music/primitives');
+const { silence } = require('../../music/primitives');
 
-const {
-  flatten,
-} = require('../../music/flatten');
+const { flatten } = require('../../music/flatten');
 
-const {
-  isSilence,
-  isNote,
-} = require('../../music/predicates');
+const { isSilence, isNote } = require('../../music/predicates');
 
 const {
   checkAllAreNotes,
@@ -34,14 +19,14 @@ const {
   checkIsArray,
 } = require('../../music/exceptions');
 
-const renderNote = (note, startTime) => c => {
+const renderNote = (note, startTime) => (c) => {
   checkAllAreNotes([note]);
   checkAllAreNumbers([startTime]);
-  const barSep = "[bar-end]";
-  const quanta = 1/16;
+  const barSep = '[bar-end]';
+  const quanta = 1 / 16;
   let quantaSum = 0;
   // minus 1 because we don't want sustain when sustainLength = 1.
-  const sustainLength = (note.length / quanta) - 1;
+  const sustainLength = note.length / quanta - 1;
   // let s = '';
   let s = note.fretRender + ' ';
   quantaSum += quanta; // meaning "add bit of the note duration to the bar."
@@ -61,54 +46,65 @@ const renderNote = (note, startTime) => c => {
 const renderSilentString = (currentLine, n, totalLength) => {
   // const silenced = silence(n);
   // const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
-  const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
+  const silenced = {
+    ...silence(n),
+    fretRender: '-'.padEnd(n.fretRender.length, ' '),
+  };
   assert.equal(silenced.fretRender.trim(), '-');
   let isChordStart = n.inChord == 'start';
   if (isChordStart) {
-    return  currentLine + renderNote(silenced, totalLength)('- ');
+    return currentLine + renderNote(silenced, totalLength)('- ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
     return currentLine;
   } else {
     return currentLine + renderNote(silenced, totalLength)('- ');
   }
-}
+};
 
-const renderActiveStringChord = (currentLine, n, lastChordStartIndex, totalLength) => {
+const renderActiveStringChord = (
+  currentLine,
+  n,
+  lastChordStartIndex,
+  totalLength
+) => {
   assert(lastChordStartIndex !== undefined);
   const isChordStart = n.inChord == 'start';
   if (isChordStart) {
     return currentLine + renderNote(n, totalLength)('= ');
   } else if (n.inChord == 'in' || n.inChord == 'end') {
-    return currentLine.substring(0, lastChordStartIndex) + renderNote(n, totalLength)('= ');
+    return (
+      currentLine.substring(0, lastChordStartIndex) +
+      renderNote(n, totalLength)('= ')
+    );
   } else {
     throw new Error('Invalid call to renderActiveStringChord');
   }
-}
+};
 
 const renderActiveStringSingleNote = (currentLine, n, totalLength) => {
   // assert.doesNotMatch(n.fret.toString(), /-/);
   let sustainSymbol = isSilence(n) ? '- ' : '= ';
   return currentLine + renderNote(n, totalLength)(sustainSymbol);
-}
+};
 
 const renderHeader = (processed, title) => {
   const lines = processed.lines;
   const headerText = `Title: ${title}`;
   const headerBar = repeat(headerText.length)('=').join('');
-  const header = [ headerBar, headerText, headerBar ].join('\n');
+  const header = [headerBar, headerText, headerBar].join('\n');
   return header;
 };
 
-const renderAnnotations = annotations => {
+const renderAnnotations = (annotations) => {
   checkIsArray(annotations);
   if (annotations.length == 0) {
     return '';
   } else {
     const maxIndex = annotations.concat([]).reverse()[0][0];
-    const annotationsObj = annotations.reduce((acc,a) => {
+    const annotationsObj = annotations.reduce((acc, a) => {
       return { ...acc, [a[0]]: a[1] };
     }, {});
-    let text = ""
+    let text = '';
     for (let i = 0; i <= maxIndex; i++) {
       text += annotationsObj[i] || ' ';
     }
@@ -116,18 +112,19 @@ const renderAnnotations = annotations => {
   }
 };
 
-const addPadding = columns => {
-  const paddedColumns = columns.map(col => {
+const addPadding = (columns) => {
+  const paddedColumns = columns.map((col) => {
     const maxLength = col.reduce((acc, note) => {
       const length = `${note.fret}`.length;
       return length > acc ? length : acc;
     }, 0);
-    return col.map(note => 
-      ({ ...note, fretRender: `${note.fret}`.padEnd(maxLength, ' ') })
-    );
+    return col.map((note) => ({
+      ...note,
+      fretRender: `${note.fret}`.padEnd(maxLength, ' '),
+    }));
   });
   return paddedColumns;
-}
+};
 
 const withRenderedFrets = (notes, tuning) => {
   const columns = asColumns(notes, tuning);
@@ -138,7 +135,7 @@ const withRenderedFrets = (notes, tuning) => {
 const renderStrings = (rawNotes, tuning) => {
   checkAllAreTuning([tuning]);
   checkAllAreNotes(rawNotes);
-  const defaultStrings = Object.keys(tuning).sort((a, b) => a > b ? -1 : 1);
+  const defaultStrings = Object.keys(tuning).sort((a, b) => (a > b ? -1 : 1));
   const initialState = {
     lines: defaultStrings.reduce((acc, k) => ({ ...acc, [k]: '' }), {}),
     totalLength: 0,
@@ -170,9 +167,18 @@ const renderStrings = (rawNotes, tuning) => {
           if (isChordStart) {
             lastChordStartIndex = currentTabLine.length;
           }
-          updatedTabLine = renderActiveStringChord(currentTabLine, n, lastChordStartIndex, totalLength);
+          updatedTabLine = renderActiveStringChord(
+            currentTabLine,
+            n,
+            lastChordStartIndex,
+            totalLength
+          );
         } else {
-          updatedTabLine = renderActiveStringSingleNote(currentTabLine, n, totalLength);
+          updatedTabLine = renderActiveStringSingleNote(
+            currentTabLine,
+            n,
+            totalLength
+          );
         }
       }
       lines[tabLineKey] = updatedTabLine;
@@ -181,7 +187,7 @@ const renderStrings = (rawNotes, tuning) => {
       annotations.push([annotationPosition, n.annotation]);
     }
     // let totalLength = acc.totalLength;
-    if (n.inChord == undefined || n.inChord == "end") {
+    if (n.inChord == undefined || n.inChord == 'end') {
       totalLength += n.length;
     }
     // return { ...acc, lines, totalLength: acc.totalLength + n.length };
@@ -192,12 +198,17 @@ const renderStrings = (rawNotes, tuning) => {
 
 const formatLines = (processed, tuning) => {
   const lines = processed.lines;
-  const formattedLines = Object.keys(lines).reverse().reduce((acc, k) => {
-    return {
-      ...acc,
-      [k]: lines[k].split('[bar-end]').filter(s => s.length > 0).map(s => `${tuning[k]} ${s}`)
-    };
-  }, {});
+  const formattedLines = Object.keys(lines)
+    .reverse()
+    .reduce((acc, k) => {
+      return {
+        ...acc,
+        [k]: lines[k]
+          .split('[bar-end]')
+          .filter((s) => s.length > 0)
+          .map((s) => `${tuning[k]} ${s}`),
+      };
+    }, {});
   /*
   const annotations = processed.annotations;
   formattedLines['::'] = splitStringIn(32)(annotations).map(s => 
@@ -207,16 +218,18 @@ const formatLines = (processed, tuning) => {
   return formattedLines;
 };
 
-const renderFormatterLines = formattedLines => {
+const renderFormatterLines = (formattedLines) => {
   const o = {};
-  Object.keys(formattedLines).forEach(k => {
-    formattedLines[k].forEach((s,i) => {
-      o[i] = (o[i] || []).concat([s])
+  Object.keys(formattedLines).forEach((k) => {
+    formattedLines[k].forEach((s, i) => {
+      o[i] = (o[i] || []).concat([s]);
     });
   });
-  return Object.keys(o).map((k) => {
-    return o[k].join('\n');
-  }).join('\n\n');
+  return Object.keys(o)
+    .map((k) => {
+      return o[k].join('\n');
+    })
+    .join('\n\n');
 };
 
 function renderASCII(program, config) {
@@ -229,10 +242,9 @@ function renderASCII(program, config) {
   const formattedLines = formatLines(processed, tuning);
   const out = [
     renderHeader(processed, title),
-    renderFormatterLines(formattedLines)
+    renderFormatterLines(formattedLines),
   ].join('\n');
   return out;
 }
 
 exports.renderASCII = renderASCII;
-

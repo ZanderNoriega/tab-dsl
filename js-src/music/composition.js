@@ -1,23 +1,16 @@
-const {
-  isNote,
-  isGroup,
-} = require('./predicates');
+const { isNote, isGroup } = require('./predicates');
 
-const {
-  flatten,
-} = require('./flatten');
+const { flatten } = require('./flatten');
 
-const {
-  checkAllAreNotes,
-} = require('./exceptions');
+const { checkAllAreNotes } = require('./exceptions');
 
-const modifiers = note => {
+const modifiers = (note) => {
   const n = { ...note };
   delete n.dotted;
-  return note.dotted ? {...n, length: n.length + n.length / 2 } : n;
-}
+  return note.dotted ? { ...n, length: n.length + n.length / 2 } : n;
+};
 
-const trim = n => xs => {
+const trim = (n) => (xs) => {
   const notes = flatten(xs).map(modifiers);
   checkAllAreNotes(notes);
   let totalLength = 0;
@@ -27,10 +20,10 @@ const trim = n => xs => {
     totalLength += notes[i].length;
   }
   return trimmed;
-}
+};
 
 // number => A => A
-const string = n => x => {
+const string = (n) => (x) => {
   if (isGroup(x)) {
     return { ...x, notes: x.notes.map(string(n)) };
   } else if (isNote(x)) {
@@ -40,7 +33,7 @@ const string = n => x => {
   } else {
     throw new Error(`Unknown type: ${JSON.stringify(x)}`);
   }
-}
+};
 
 const s7 = string(7);
 const s6 = string(6);
@@ -50,22 +43,22 @@ const s3 = string(3);
 const s2 = string(2);
 const s1 = string(1);
 
-exports.trim = trim; 
+exports.trim = trim;
 
-exports.string = string; 
+exports.string = string;
 
-exports.s7 = s7; 
+exports.s7 = s7;
 
-exports.s6 = s6; 
+exports.s6 = s6;
 
-exports.s5 = s5; 
+exports.s5 = s5;
 
-exports.s4 = s4; 
+exports.s4 = s4;
 
-exports.s3 = s3; 
+exports.s3 = s3;
 
-exports.s2 = s2; 
+exports.s2 = s2;
 
-exports.s1 = s1; 
+exports.s1 = s1;
 
-exports.modifiers = modifiers; 
+exports.modifiers = modifiers;

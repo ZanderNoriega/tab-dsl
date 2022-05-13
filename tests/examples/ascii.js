@@ -1,7 +1,4 @@
-const {
-  flatRepeat,
-  repeat,
-} = require('../../src/std');
+const { flatRepeat, repeat } = require('../../src/std');
 
 const {
   sixteenth,
@@ -19,41 +16,30 @@ const {
   powerChord5,
   powerChord6,
   open3,
-  dropBar6
+  dropBar6,
 } = require('../../src/music/chords');
 
-const {
-  palmMuted,
-  pe,
-  ms,
-} = require('../../src/music/performance');
+const { palmMuted, pe, ms } = require('../../src/music/performance');
 
-const {
-  trim,
-  s7,
-  s4,
-  s3,
-  s2,
-  s1,
-} = require('../../src/music/composition');
+const { trim, s7, s4, s3, s2, s1 } = require('../../src/music/composition');
 
-const {
-  renderASCII,
-} = require('../../src/render/ascii');
+const { renderASCII } = require('../../src/render/ascii');
 
 // constructors - convenience
 // Test 0
-let chuggies = palmMuted(sixteenths([0,1,0])); 
+let chuggies = palmMuted(sixteenths([0, 1, 0]));
 const t0 = {
   program: [
-    ...trim(8)(flatRepeat(15)([
-      ...s7([chuggies, de(2), pe(0), pe(0)]),
-      ...s7([chuggies, de(2), pe(0), pe(0)]),
-      ...s7([chuggies]),
-    ]))
+    ...trim(8)(
+      flatRepeat(15)([
+        ...s7([chuggies, de(2), pe(0), pe(0)]),
+        ...s7([chuggies, de(2), pe(0), pe(0)]),
+        ...s7([chuggies]),
+      ])
+    ),
   ],
   config: {
-    title: "Meshuggah - New Millenium Cyanide Christ",
+    title: 'Meshuggah - New Millenium Cyanide Christ',
     tuning: {
       s1: 'Eb',
       s2: 'Bb',
@@ -62,16 +48,16 @@ const t0 = {
       s5: 'Ab',
       s6: 'Eb',
       s7: 'Bb',
-    }
-  }
+    },
+  },
 };
 
-const smellsStart = rootFret => [
+const smellsStart = (rootFret) => [
   powerChord6(de)(rootFret),
   powerChord6(s)(rootFret),
   powerChord6(e)(rootFret),
 ];
-const smellsEnd = rootFret => [
+const smellsEnd = (rootFret) => [
   powerChord5(e)(1),
   ...repeat(2)(powerChord5(s)(rootFret)),
 ];
@@ -88,10 +74,10 @@ const t1 = {
     ...repeat(4)(powerChord6(ms)(4)),
     ...smellsEnd(4),
     powerChord5(ss)(4),
-    open3(5)(sixteenth)
+    open3(5)(sixteenth),
   ],
   config: {
-    title: "Nirvana - Smells Like Teen Spirit",
+    title: 'Nirvana - Smells Like Teen Spirit',
     tuning: {
       s1: 'E',
       s2: 'B',
@@ -99,16 +85,16 @@ const t1 = {
       s4: 'D',
       s5: 'A',
       s6: 'E',
-    }
-  }
-}
+    },
+  },
+};
 
 const t2 = {
-  program:
-    [ 0, 11, 12, 0, 11, 8, 0, 8, 0, 8, 7, 0, 8, 5 ].map(dropBar6(sixteenth))
-  ,
+  program: [0, 11, 12, 0, 11, 8, 0, 8, 0, 8, 7, 0, 8, 5].map(
+    dropBar6(sixteenth)
+  ),
   config: {
-    title: "Deftones - My Own Summer",
+    title: 'Deftones - My Own Summer',
     tuning: {
       s1: 'E',
       s2: 'B',
@@ -116,8 +102,8 @@ const t2 = {
       s4: 'D',
       s5: 'A',
       s6: 'D',
-    }
-  }
+    },
+  },
 };
 
 const t3 = {
@@ -134,7 +120,7 @@ const t3 = {
     s7(de(9)),
   ],
   config: {
-    title: "Zander Noriega - Steredenn",
+    title: 'Zander Noriega - Steredenn',
     tuning: {
       s1: 'Eb',
       s2: 'Bb',
@@ -143,19 +129,16 @@ const t3 = {
       s5: 'Ab',
       s6: 'Eb',
       s7: 'Ab',
-    }
-  }
+    },
+  },
 };
 
 const q = quarter;
 const h = half;
-const stac = noteCons => fret => {
+const stac = (noteCons) => (fret) => {
   const n = noteCons(fret);
   const halved = { ...n, length: n.length / 2 };
-  return [
-    halved,
-    silence(halved)
-  ];
+  return [halved, silence(halved)];
 };
 
 const t4 = {
@@ -195,7 +178,7 @@ const t4 = {
     s4(sixteenth(14)),
   ],
   config: {
-    title: "Zander Noriega - Exercise 1",
+    title: 'Zander Noriega - Exercise 1',
     tuning: {
       s1: 'Eb',
       s2: 'Bb',
@@ -204,15 +187,10 @@ const t4 = {
       s5: 'Ab',
       s6: 'Eb',
       s7: 'Ab',
-    }
-  }
+    },
+  },
 };
 
-exports.examples = [
-  t0,
-  t1,
-  t2,
-  t3,
-  t4
-].map(t => renderASCII(t.program, t.config)).join('\n');
-
+exports.examples = [t0, t1, t2, t3, t4]
+  .map((t) => renderASCII(t.program, t.config))
+  .join('\n');

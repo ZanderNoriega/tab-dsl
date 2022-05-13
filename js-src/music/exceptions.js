@@ -1,39 +1,29 @@
-const {
-  isDefined,
-  isNumber,
-  isString,
-  toString,
-} = require('../std');
+const { isDefined, isNumber, isString, toString } = require('../std');
 
-const {
-  isNote,
-  isTuning,
-} = require('./predicates');
+const { isNote, isTuning } = require('./predicates');
 
-const {
-  assert,
-} = require('../std');
+const { assert } = require('../std');
 
 function checkAllAreDefined(xs) {
   if (!xs.every(isDefined)) {
-    throw "checkAllAreDefined";
+    throw 'checkAllAreDefined';
   }
 }
 
 function checkIsArray(x) {
   if (!Array.isArray(x)) {
-    throw "checkIsArray";
+    throw 'checkIsArray';
   }
 }
 
 function checkAllAreStrings(xs) {
   if (!xs.every(isString)) {
-    throw "checkAllAreStrings";
+    throw 'checkAllAreStrings';
   }
 }
 
 function checkAllAreNumbers(xs) {
-  xs.forEach(x => {
+  xs.forEach((x) => {
     assert(isNumber(x), `${x} is a number`);
   });
 }
@@ -46,27 +36,32 @@ function checkAllAreNotes(xs) {
 
 function checkAllNotesTuningConsistency(notes, tuning) {
   const stringQty = Object.keys(tuning).length;
-  notes.forEach(n => {
+  notes.forEach((n) => {
     assert(n.string !== undefined, `note (${toString(n)}) has string`);
-    assert(n.string <= stringQty, `note (${toString(n)}) has string number <= to amount of strings in tuning (${stringQty})`);
+    assert(
+      n.string <= stringQty,
+      `note (${toString(
+        n
+      )}) has string number <= to amount of strings in tuning (${stringQty})`
+    );
   });
 }
 
 function checkAllNotesHaveStrings(notes) {
-  if (!notes.every(n => n.string !== undefined)) {
-    throw "checkAllNotesHaveStrings";
+  if (!notes.every((n) => n.string !== undefined)) {
+    throw 'checkAllNotesHaveStrings';
   }
 }
 
 function checkAllAreTuning(xs) {
   if (!xs.every(isTuning)) {
-    throw "checkAllAreTuning";
+    throw 'checkAllAreTuning';
   }
 }
 
 function checkNoDuplicates(xs) {
   const ys = new Set();
-  xs.forEach(x => {
+  xs.forEach((x) => {
     ys.add(x);
   });
   if (ys.size !== xs.length) {
@@ -76,7 +71,7 @@ function checkNoDuplicates(xs) {
 
 function checkAllEqual(xs) {
   const ys = new Set();
-  xs.forEach(x => {
+  xs.forEach((x) => {
     ys.add(x);
   });
   if (ys.size !== 1) {
@@ -84,14 +79,14 @@ function checkAllEqual(xs) {
   }
 }
 
-function checkNumberGreaterThan(a,b) {
+function checkNumberGreaterThan(a, b) {
   checkAllAreNumbers([a, b]);
   if (a <= b) {
     throw `checkNumberGreaterThan(${a}, ${b})`;
   }
 }
 
-const checkNumberGreaterThanZero = n => checkNumberGreaterThan(n, 0);
+const checkNumberGreaterThanZero = (n) => checkNumberGreaterThan(n, 0);
 
 exports.checkIsArray = checkIsArray;
 
@@ -115,5 +110,4 @@ exports.checkNumberGreaterThan = checkNumberGreaterThan;
 
 exports.checkAllAreDefined = checkAllAreDefined;
 
-exports.checkNumberGreaterThanZero = checkNumberGreaterThanZero; 
-
+exports.checkNumberGreaterThanZero = checkNumberGreaterThanZero;
