@@ -1,8 +1,14 @@
 // Music
 
-type Length = number;
+export type Length = number;
 
-type Note<T> = { length: Length; dotted?: boolean | undefined } & T;
+type ChordalState = 'start' | 'in' | 'end';
+
+export type Note<T> = {
+  length: Length;
+  dotted?: boolean | undefined;
+  inChord?: ChordalState | undefined;
+} & T;
 
 export const note =
   (length: Length) =>
@@ -10,7 +16,7 @@ export const note =
 
 export const dotted = <T>(x: Note<T>): Note<T> => ({ ...x, dotted: true });
 
-type Group<T> = { notes: Note<T>[] };
+export type Group<T> = { notes: Note<T>[] };
 
 export const group = <T>(xs: Note<T>[]): Group<T> => ({ notes: xs });
 
