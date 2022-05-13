@@ -39,7 +39,7 @@ const {
 
 const {
   renderASCII,
-} = require('../../src/render/ascii/render');
+} = require('../../src/render/ascii');
 
 // constructors - convenience
 // Test 0
