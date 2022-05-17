@@ -4,12 +4,14 @@ const { flatten } = require('./flatten');
 
 const { checkAllAreNotes } = require('./exceptions');
 
+// src/music/program.ts
 const modifiers = (note) => {
   const n = { ...note };
   delete n.dotted;
   return note.dotted ? { ...n, length: n.length + n.length / 2 } : n;
 };
 
+// src/music/program.ts
 const trim = (n) => (xs) => {
   const notes = flatten(xs).map(modifiers);
   checkAllAreNotes(notes);
@@ -22,7 +24,7 @@ const trim = (n) => (xs) => {
   return trimmed;
 };
 
-// number => A => A
+// src/music/guitar/primitives.ts
 const string = (n) => (x) => {
   if (isGroup(x)) {
     return { ...x, notes: x.notes.map(string(n)) };

@@ -27,3 +27,27 @@ export const e = eighth;
 export const de = (fret: Fret) => dotted(eighth(fret));
 export const s = sixteenth;
 export const ss = (fret: Fret) => silence(s(fret));
+
+export const setString =
+  (n: GuitarString) =>
+  (x: GuitarNote): GuitarNote => {
+    return { ...x, str: n };
+  };
+
+export const s9 = setString(9);
+
+export const s8 = setString(8);
+
+export const s7 = setString(7);
+
+export const s6 = setString(6);
+
+export const s5 = setString(5);
+
+export const s4 = setString(4);
+
+export const s3 = setString(3);
+
+export const s2 = setString(2);
+
+export const s1 = setString(1);
