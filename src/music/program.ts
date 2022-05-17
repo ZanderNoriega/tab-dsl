@@ -4,13 +4,23 @@ import { Region } from './region';
 export type Event<T> = Note<T> | Region<T>;
 export type Program<T> = Event<T>[];
 
-export const flatten = <T>(program: Program<T>): Note<T>[] => {
-  return program.reduce((acc: Note<T>[], x: Note<T> | Region<T>) => {
-    if (x.type == 'region') {
-      return acc.concat(x.notes);
+export const fold =
+  <T, U>(f: (a: Note<T>) => U, g: (a: Region<T>) => U) =>
+  (e: Event<T>): U => {
+    if (e.type == 'note') {
+      return f(e);
     } else {
-      return acc.concat([x]);
+      return g(e);
     }
+  };
+
+export const flatten = <T>(program: Program<T>): Note<T>[] => {
+  return program.reduce((acc: Note<T>[], x: Event<T>) => {
+    let xs: Note<T>[] = fold<T, Note<T>[]>(
+      (note) => [note],
+      (r) => r.notes
+    )(x);
+    return acc.concat(xs);
   }, []);
 };
 
