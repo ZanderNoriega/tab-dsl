@@ -2,13 +2,13 @@
 
 export type Length = number;
 
-type ChordalState = 'start' | 'in' | 'end';
+export type ChordState = 'start' | 'end' | 'in';
 
 export type Note<T> = {
   type: 'note';
   length: Length;
   dotted?: boolean | undefined;
-  inChord?: ChordalState | undefined;
+  inChord?: ChordState | undefined;
 } & T;
 
 export const note =
