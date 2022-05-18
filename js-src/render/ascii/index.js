@@ -19,6 +19,7 @@ const {
   checkIsArray,
 } = require('../../music/exceptions');
 
+// src/render/ascii/guitar/index.ts
 const renderNote = (note, startTime) => (c) => {
   checkAllAreNotes([note]);
   checkAllAreNumbers([startTime]);
@@ -43,6 +44,7 @@ const renderNote = (note, startTime) => (c) => {
   return s;
 };
 
+// src/render/ascii/guitar/index.ts
 const renderSilentString = (currentLine, n, totalLength) => {
   // const silenced = silence(n);
   // const silenced = { ...silence(n), fretRender: '-'.padEnd(n.fretRender.length, ' ') };
