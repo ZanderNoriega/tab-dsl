@@ -1,4 +1,6 @@
+import { ChordState } from '../../../music/primitives';
 import { GuitarNote, silence } from '../../../music/guitar/primitives';
+import { isSilence } from '../../../music/guitar/predicates';
 
 type SustainChar = string;
 type Renderable<T> = T & { fretRender: string };
@@ -44,7 +46,7 @@ export const renderSilentString = (
   currentLine: Line,
   n: Renderable<GuitarNote>,
   t: TotalLength
-) => {
+): Line => {
   const silenced: Renderable<GuitarNote> = {
     ...silence(n),
     fretRender: '-'.padEnd(n.fretRender.length, ' '),
@@ -57,4 +59,31 @@ export const renderSilentString = (
   } else {
     return currentLine + renderNote(silenced, t)('- ');
   }
+};
+
+export const renderActiveStringChord = (
+  currentLine: Line,
+  n: Renderable<GuitarNote & { inChord: ChordState }>,
+  lastChordStartIndex: number,
+  t: TotalLength
+): Line => {
+  const isChordStart = n.inChord == 'start';
+  if (isChordStart) {
+    return currentLine + renderNote(n, t)('= ');
+  } else if (n.inChord == 'in' || n.inChord == 'end') {
+    return (
+      currentLine.substring(0, lastChordStartIndex) + renderNote(n, t)('= ')
+    );
+  } else {
+    return currentLine;
+  }
+};
+
+export const renderActiveStringSingleNote = (
+  currentLine: Line,
+  n: Renderable<GuitarNote>,
+  t: TotalLength
+): Line => {
+  let sustainSymbol = isSilence(n) ? '- ' : '= ';
+  return currentLine + renderNote(n, t)(sustainSymbol);
 };

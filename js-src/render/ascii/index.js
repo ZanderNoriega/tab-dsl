@@ -63,6 +63,7 @@ const renderSilentString = (currentLine, n, totalLength) => {
   }
 };
 
+// src/render/ascii/guitar/index.ts
 const renderActiveStringChord = (
   currentLine,
   n,
@@ -83,6 +84,7 @@ const renderActiveStringChord = (
   }
 };
 
+// src/render/ascii/guitar/index.ts
 const renderActiveStringSingleNote = (currentLine, n, totalLength) => {
   // assert.doesNotMatch(n.fret.toString(), /-/);
   let sustainSymbol = isSilence(n) ? '- ' : '= ';
