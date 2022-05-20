@@ -1,7 +1,8 @@
 import { ChordState } from '../../../music/primitives';
 import { GuitarNote, silence } from '../../../music/guitar/primitives';
 import { isSilence } from '../../../music/guitar/predicates';
-import { repeat } from '../../../std';
+import { columnsToArray, repeat } from '../../../std';
+import { asColumns } from '../../../music/algebra';
 
 type SustainChar = string;
 type Renderable<T> = T & { fretRender: string };
@@ -110,4 +111,12 @@ export const addPadding = (
     }));
   });
   return paddedColumns;
+};
+
+export const withRenderedFrets = (
+  notes: GuitarNote[]
+): Renderable<GuitarNote>[] => {
+  const columns = asColumns(notes);
+  const paddedColumns = addPadding(columns);
+  return columnsToArray(paddedColumns);
 };
