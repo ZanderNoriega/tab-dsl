@@ -91,6 +91,7 @@ const renderActiveStringSingleNote = (currentLine, n, totalLength) => {
   return currentLine + renderNote(n, totalLength)(sustainSymbol);
 };
 
+// src/render/ascii/guitar/index.ts
 const renderHeader = (processed, title) => {
   const lines = processed.lines;
   const headerText = `Title: ${title}`;
@@ -116,6 +117,7 @@ const renderAnnotations = (annotations) => {
   }
 };
 
+// src/render/ascii/guitar/index.ts
 const addPadding = (columns) => {
   const paddedColumns = columns.map((col) => {
     const maxLength = col.reduce((acc, note) => {

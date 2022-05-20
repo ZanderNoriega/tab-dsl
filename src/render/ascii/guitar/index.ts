@@ -1,6 +1,7 @@
 import { ChordState } from '../../../music/primitives';
 import { GuitarNote, silence } from '../../../music/guitar/primitives';
 import { isSilence } from '../../../music/guitar/predicates';
+import { repeat } from '../../../std';
 
 type SustainChar = string;
 type Renderable<T> = T & { fretRender: string };
@@ -86,4 +87,27 @@ export const renderActiveStringSingleNote = (
 ): Line => {
   let sustainSymbol = isSilence(n) ? '- ' : '= ';
   return currentLine + renderNote(n, t)(sustainSymbol);
+};
+
+export const renderHeader = (title: string): string => {
+  const headerText = `Title: ${title}`;
+  const headerBar = repeat(headerText.length)('=').join('');
+  const header = [headerBar, headerText, headerBar].join('\n');
+  return header;
+};
+
+export const addPadding = (
+  columns: GuitarNote[][]
+): Renderable<GuitarNote>[][] => {
+  const paddedColumns = columns.map((col: GuitarNote[]) => {
+    const maxLength = col.reduce((acc, note) => {
+      const length = `${note.fret}`.length;
+      return length > acc ? length : acc;
+    }, 0);
+    return col.map((note) => ({
+      ...note,
+      fretRender: `${note.fret}`.padEnd(maxLength, ' '),
+    }));
+  });
+  return paddedColumns;
 };
