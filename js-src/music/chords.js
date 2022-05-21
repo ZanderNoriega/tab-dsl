@@ -43,6 +43,7 @@ const open = (size) => (rootString) => (noteCons) =>
   bar(size)(rootString)(noteCons)(0);
 const open3 = open(3);
 
+// src/music/guitar/chords.js
 const powerChord = (rootString) => (noteCons) => (rootFret) => {
   checkNumberGreaterThan(rootString, 2);
   checkNumberGreaterThanZero(rootFret);
