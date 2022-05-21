@@ -51,9 +51,34 @@ export const bar =
   };
 
 export const dropBar = bar(3);
+
 export const dropBar7 = dropBar(7);
+
 export const dropBar6 = dropBar(6);
+
 export const open =
-  (size: number) => (rootString: GuitarString) => (noteCons: NoteCons) =>
+  (size: number) =>
+  (rootString: GuitarString) =>
+  (noteCons: NoteCons): GuitarNote[] =>
     bar(size)(rootString)(noteCons)(0);
+
 export const open3 = open(3);
+
+export const powerChord =
+  (rootString: GuitarString) =>
+  (noteCons: NoteCons) =>
+  (rootFret: Fret): GuitarNote[] => {
+    return rootFret == '-'
+      ? []
+      : chord([
+          setString(rootString)(noteCons(rootFret)),
+          setString(rootString - 1)(noteCons(rootFret + 2)),
+          setString(rootString - 2)(noteCons(rootFret + 2)),
+        ]);
+  };
+
+export const powerChord7 = powerChord(7);
+
+export const powerChord6 = powerChord(6);
+
+export const powerChord5 = powerChord(5);
