@@ -1,4 +1,4 @@
-import { Note, note, dotted, Length } from '../primitives';
+import { Note, note, dotted, Length, ChordNote } from '../primitives';
 
 // Guitar
 
@@ -9,6 +9,8 @@ export type Fret = number | '-';
 export type Guitar = { str: GuitarString; fret: Fret };
 
 export type GuitarNote = Note<Guitar>;
+
+export type GuitarChordNote = ChordNote<Guitar>;
 
 export const guitarNote =
   (length: Length) =>

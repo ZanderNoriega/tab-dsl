@@ -1,6 +1,10 @@
-import { ChordState } from '../../../music/primitives';
-import { GuitarNote, silence } from '../../../music/guitar/primitives';
+import {
+  GuitarNote,
+  GuitarChordNote,
+  silence,
+} from '../../../music/guitar/primitives';
 import { isSilence } from '../../../music/guitar/predicates';
+import { Tuning } from '../../../music/guitar/tuning';
 import { columnsToArray, repeat } from '../../../std';
 import { asColumns } from '../../../music/algebra';
 
@@ -65,7 +69,7 @@ export const renderSilentString = (
 
 export const renderActiveStringChord = (
   currentLine: Line,
-  n: Renderable<GuitarNote & { inChord: ChordState }>,
+  n: Renderable<GuitarChordNote>,
   lastChordStartIndex: number,
   t: TotalLength
 ): Line => {
@@ -119,4 +123,90 @@ export const withRenderedFrets = (
   const columns = asColumns(notes);
   const paddedColumns = addPadding(columns);
   return columnsToArray(paddedColumns);
+};
+
+type Lines = { [k in number]: string };
+
+const emptyLinesForTuning = (tuning: Tuning): Lines => {
+  if (tuning.type === 6) {
+    return {
+      1: '',
+      2: '',
+      3: '',
+      4: '',
+      5: '',
+      6: '',
+    };
+  } else {
+    return {
+      1: '',
+      2: '',
+      3: '',
+      4: '',
+      5: '',
+      6: '',
+      7: '',
+    };
+  }
+};
+
+export const renderStrings = (rawNotes: GuitarNote[], tuning: Tuning) => {
+  // const defaultStrings = Object.keys(tuning).sort((a, b) => (a > b ? -1 : 1));
+  const emptyLines: Lines = emptyLinesForTuning(tuning);
+  const initialState: { lines: Lines; totalLength: TotalLength } = {
+    lines: emptyLines,
+    totalLength: 0,
+  };
+  const notes: Renderable<GuitarNote>[] = withRenderedFrets(rawNotes);
+  let lastChordStartIndex: number | undefined = undefined;
+  // (number, string)[]
+  // where number is an index, and string is the message to place at that index
+  const processed = notes.reduce((acc, n: Renderable<GuitarNote>) => {
+    const lines = { ...acc.lines };
+    let totalLength = acc.totalLength;
+    // sort of a "playhead" along the "tracks"
+    const FIRST_STRING = 1;
+    for (let i = FIRST_STRING; i <= Object.keys(emptyLines).length; i++) {
+      let tabLineKey = i;
+      // one tab line per string
+      let currentTabLine = acc.lines[tabLineKey];
+      if (currentTabLine !== undefined) {
+        // step the "playhead" forward (for annotation purposes)
+        let isSilentString = i !== n.str;
+        let updatedTabLine = '';
+        if (isSilentString) {
+          updatedTabLine = renderSilentString(currentTabLine, n, totalLength);
+        } else {
+          let inChord = n.inChord;
+          if (inChord !== undefined) {
+            let chordNote: Renderable<GuitarChordNote> = { ...n, inChord };
+            let isChordStart = inChord == 'start';
+            if (isChordStart) {
+              lastChordStartIndex = currentTabLine.length;
+            }
+            if (lastChordStartIndex) {
+              updatedTabLine = renderActiveStringChord(
+                currentTabLine,
+                chordNote,
+                lastChordStartIndex,
+                totalLength
+              );
+            }
+          } else {
+            updatedTabLine = renderActiveStringSingleNote(
+              currentTabLine,
+              n,
+              totalLength
+            );
+          }
+        }
+        lines[tabLineKey] = updatedTabLine;
+      }
+    }
+    if (n.inChord == undefined || n.inChord == 'end') {
+      totalLength += n.length;
+    }
+    return { ...acc, lines, totalLength };
+  }, initialState);
+  return processed;
 };

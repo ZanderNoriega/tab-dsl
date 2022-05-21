@@ -132,12 +132,14 @@ const addPadding = (columns) => {
   return paddedColumns;
 };
 
+// src/render/ascii/guitar/index.ts
 const withRenderedFrets = (notes, tuning) => {
   const columns = asColumns(notes, tuning);
   const paddedColumns = addPadding(columns);
   return columnsToArray(paddedColumns);
 };
 
+// src/render/ascii/guitar/index.ts
 const renderStrings = (rawNotes, tuning) => {
   checkAllAreTuning([tuning]);
   checkAllAreNotes(rawNotes);
