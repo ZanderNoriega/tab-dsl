@@ -11,16 +11,17 @@ export type Note<T> = {
   inChord?: ChordState | undefined;
 } & T;
 
+type RemoveInChordField<Type> = {
+  [Property in keyof Type as Exclude<Property, 'inChord'>]: Type[Property];
+};
+
+// ie. same as Note<T> but ChordState property not optional.
+export type ChordNote<T> = RemoveInChordField<Note<T>> & {
+  inChord: ChordState;
+};
+
 export const note =
   (length: Length) =>
   <T>(x: T): Note<T> => ({ type: 'note', length, ...x });
 
 export const dotted = <T>(x: Note<T>): Note<T> => ({ ...x, dotted: true });
-
-type RemoveInChordField<Type> = {
-  [Property in keyof Type as Exclude<Property, 'inChord'>]: Type[Property];
-};
-
-export type ChordNote<T> = RemoveInChordField<Note<T>> & {
-  inChord: ChordState;
-};
