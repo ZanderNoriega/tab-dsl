@@ -1,8 +1,10 @@
 import {
+  Guitar,
   GuitarNote,
   GuitarChordNote,
   silence,
 } from '../../../music/guitar/primitives';
+import { Program, compile } from '../../../music/program';
 import { isSilence } from '../../../music/guitar/predicates';
 import { Tuning, pitch } from '../../../music/guitar/tuning';
 import { columnsToArray, repeat } from '../../../std';
@@ -259,5 +261,19 @@ export const renderFormattedLines = (
     })
     .join('\n\n');
 };
-/*
- */
+
+type Config = { tuning: Tuning; title: string };
+
+export const renderASCII = (
+  program: Program<Guitar>,
+  config: Config
+): string => {
+  const { tuning, title } = config;
+  const notes = compile(program);
+  const processed = renderStrings(notes, tuning);
+  const formattedLines = formatLines(processed, tuning);
+  const out = [renderHeader(title), renderFormattedLines(formattedLines)].join(
+    '\n'
+  );
+  return out;
+};

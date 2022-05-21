@@ -45,3 +45,7 @@ export const trim =
     }
     return trimmed;
   };
+
+export const compile = <T>(program: Program<T>): Note<T>[] => {
+  return flatten(program).map(modifiers);
+};
