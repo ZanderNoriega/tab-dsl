@@ -35,6 +35,7 @@ const bar = (size) => (rootString) => (noteCons) => (rootFret) => {
   }
   return chord(notes);
 };
+// src/music/guitar/chords.js
 const dropBar = bar(3);
 const dropBar7 = dropBar(7);
 const dropBar6 = dropBar(6);

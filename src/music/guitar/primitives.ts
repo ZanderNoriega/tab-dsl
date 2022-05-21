@@ -10,6 +10,8 @@ export type Guitar = { str: GuitarString; fret: Fret };
 
 export type GuitarNote = Note<Guitar>;
 
+export type NoteCons = (fret: Fret) => GuitarNote;
+
 export type GuitarChordNote = ChordNote<Guitar>;
 
 export const guitarNote =
