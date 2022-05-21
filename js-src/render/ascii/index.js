@@ -204,6 +204,7 @@ const renderStrings = (rawNotes, tuning) => {
   return { ...processed, annotations: renderAnnotations(annotations) };
 };
 
+// src/render/ascii/guitar/index.ts
 const formatLines = (processed, tuning) => {
   const lines = processed.lines;
   const formattedLines = Object.keys(lines)

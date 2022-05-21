@@ -4,7 +4,7 @@ import {
   silence,
 } from '../../../music/guitar/primitives';
 import { isSilence } from '../../../music/guitar/predicates';
-import { Tuning } from '../../../music/guitar/tuning';
+import { Tuning, pitch } from '../../../music/guitar/tuning';
 import { columnsToArray, repeat } from '../../../std';
 import { asColumns } from '../../../music/algebra';
 
@@ -150,7 +150,12 @@ const emptyLinesForTuning = (tuning: Tuning): Lines => {
   }
 };
 
-export const renderStrings = (rawNotes: GuitarNote[], tuning: Tuning) => {
+type Processed = { lines: Lines };
+
+export const renderStrings = (
+  rawNotes: GuitarNote[],
+  tuning: Tuning
+): Processed => {
   // const defaultStrings = Object.keys(tuning).sort((a, b) => (a > b ? -1 : 1));
   const emptyLines: Lines = emptyLinesForTuning(tuning);
   const initialState: { lines: Lines; totalLength: TotalLength } = {
@@ -209,4 +214,23 @@ export const renderStrings = (rawNotes: GuitarNote[], tuning: Tuning) => {
     return { ...acc, lines, totalLength };
   }, initialState);
   return processed;
+};
+
+export const formatLines = (processed: Processed, tuning: Tuning): Lines => {
+  const lines = processed.lines;
+  const formattedLines = Object.keys(lines)
+    .reverse()
+    .reduce((acc, k: string) => {
+      const l: Line | undefined = lines[+k];
+      return l
+        ? {
+            ...acc,
+            [k]: l
+              .split('[bar-end]')
+              .filter((s: string) => s.length > 0)
+              .map((s: string) => `${pitch(+k)(tuning)} ${s}`),
+          }
+        : acc;
+    }, {});
+  return formattedLines;
 };

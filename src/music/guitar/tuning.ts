@@ -22,5 +22,50 @@ export type Seven = {
   6: TuningPitch;
   7: TuningPitch;
 };
-// export type Tuning = { [k in GuitarString]: TuningPitch };
+
 export type Tuning = Six | Seven;
+
+export const pitch =
+  (n: number) =>
+  (tuning: Tuning): TuningPitch => {
+    switch (tuning.type) {
+      case 6:
+        switch (n) {
+          case 6:
+            return tuning[6];
+          case 5:
+            return tuning[5];
+          case 4:
+            return tuning[4];
+          case 3:
+            return tuning[3];
+          case 2:
+            return tuning[2];
+          case 1:
+            return tuning[1];
+          default:
+            return tuning[6];
+        }
+      case 7:
+        switch (n) {
+          case 7:
+            return tuning[7];
+          case 6:
+            return tuning[6];
+          case 5:
+            return tuning[5];
+          case 4:
+            return tuning[4];
+          case 3:
+            return tuning[3];
+          case 2:
+            return tuning[2];
+          case 1:
+            return tuning[1];
+          default:
+            return tuning[7];
+        }
+      default:
+        return tuning[6];
+    }
+  };
