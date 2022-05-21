@@ -216,7 +216,12 @@ export const renderStrings = (
   return processed;
 };
 
-export const formatLines = (processed: Processed, tuning: Tuning): Lines => {
+type FormattedLines = { [k in number]: string[] };
+
+export const formatLines = (
+  processed: Processed,
+  tuning: Tuning
+): FormattedLines => {
   const lines = processed.lines;
   const formattedLines = Object.keys(lines)
     .reverse()
@@ -234,3 +239,25 @@ export const formatLines = (processed: Processed, tuning: Tuning): Lines => {
     }, {});
   return formattedLines;
 };
+
+export const renderFormattedLines = (
+  formattedLines: FormattedLines
+): string => {
+  const o: { [key: number]: string[] } = {};
+  Object.keys(formattedLines).forEach((k: string) => {
+    const xs: Line[] | undefined = formattedLines[+k];
+    if (xs) {
+      xs.forEach((s: Line, i: number) => {
+        o[i] = (o[i] || []).concat([s]);
+      });
+    }
+  });
+  return Object.keys(o)
+    .map((k: string) => {
+      const s: string[] | undefined = o[+k];
+      return s ? s.join('\n') : '';
+    })
+    .join('\n\n');
+};
+/*
+ */

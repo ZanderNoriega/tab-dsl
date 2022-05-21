@@ -227,6 +227,7 @@ const formatLines = (processed, tuning) => {
   return formattedLines;
 };
 
+// src/render/ascii/guitar/index.ts
 const renderFormatterLines = (formattedLines) => {
   const o = {};
   Object.keys(formattedLines).forEach((k) => {
