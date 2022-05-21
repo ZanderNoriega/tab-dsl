@@ -10,6 +10,7 @@ const { string, modifiers } = require('./composition');
 
 const { flatten } = require('./flatten');
 
+// src/music/guitar/chords.js
 const chord = (xs) => {
   const notes = flatten(xs).map(modifiers);
   checkAllAreNotes(notes);
@@ -22,6 +23,7 @@ const chord = (xs) => {
   }));
   return marked;
 };
+// src/music/guitar/chords.js
 const bar = (size) => (rootString) => (noteCons) => (rootFret) => {
   checkNumberGreaterThan(size, 1);
   checkNumberGreaterThan(rootString, 1);

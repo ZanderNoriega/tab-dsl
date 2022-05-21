@@ -1,5 +1,5 @@
 import { ChordState } from '../primitives';
-import { GuitarNote } from './primitives';
+import { GuitarNote, GuitarString, setString, Fret } from './primitives';
 import {
   checked,
   NoDupesArray,
@@ -31,3 +31,15 @@ export const buildChord = (xs: ChordStringArray): GuitarNote[] => {
   });
   return marked;
 };
+
+export const bar =
+  (size: number) =>
+  (rootString: GuitarString) =>
+  (noteCons: (fret: Fret) => GuitarNote) =>
+  (rootFret: Fret) => {
+    let notes = [];
+    for (let i = rootString; i > 0 && notes.length < size; i--) {
+      notes.push(setString(i)(noteCons(rootFret)));
+    }
+    return chord(notes);
+  };
